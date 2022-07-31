@@ -17,6 +17,8 @@ func (rm RichMap) String() string {
 
 type RichFrame []RichMap
 
+type RichFrames map[string]RichFrame
+
 type ApplyFunc func(RichMap)
 
 type AddFunc func(RichMap) interface{}

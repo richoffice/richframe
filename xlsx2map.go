@@ -15,7 +15,7 @@ type Options struct {
 func Marshal(outFilePath string, input interface{}, def *XlsxFileDef) error {
 
 	f := excelize.NewFile()
-	if data, ok := input.(map[string][]map[string]interface{}); ok {
+	if data, ok := input.(RichFrames); ok {
 		// fmt.Println("map[string]map[string]interface{}")
 		for _, sheetDef := range def.SheetDefs {
 			f.NewSheet(sheetDef.GetTitle())
@@ -81,11 +81,10 @@ func Unmarshal(xslxFile string, result interface{}, def *XlsxFileDef, opts *Opti
 			}
 
 			switch v := result.(type) {
-			case map[string][]map[string]interface{}:
+			case RichFrames:
 				v[sheetDef.Key] = sheetMap
-				// fmt.Println("map[string]map[string]interface{}")
 			default:
-				fmt.Println(v)
+				return fmt.Errorf("not a sheepmap: %v", sheetMap)
 			}
 
 			// xlsxMaps[sheetDef.Key] = sheetMap
@@ -98,14 +97,14 @@ func Unmarshal(xslxFile string, result interface{}, def *XlsxFileDef, opts *Opti
 	return nil
 }
 
-func parseSheet(f *excelize.File, sheet string, sheetDef *SheetDef) ([]map[string]interface{}, error) {
+func parseSheet(f *excelize.File, sheet string, sheetDef *SheetDef) (RichFrame, error) {
 	rows, err := f.GetRows(sheet, excelize.Options{RawCellValue: true})
 	if err != nil {
 		return nil, err
 	}
 
 	var columns *Columns = nil
-	results := make([]map[string]interface{}, 0)
+	results := RichFrame{}
 	for i, row := range rows {
 		if i == 0 {
 			columns = PrepareColumns(row, sheetDef)
@@ -173,6 +172,51 @@ func LoadFromFile(excelFile, excelDefFile string, opts *Options) (map[string][]m
 }
 
 func ExportToFile(data map[string][]map[string]interface{}, outExcelFile, excelDefFile string, opts *Options) error {
+	def := &XlsxFileDef{}
+	file, err := os.Open(excelDefFile)
+
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	loadErr := LoadXlsxFileDef(file, def)
+	if loadErr != nil {
+		return loadErr
+	}
+
+	return Marshal(outExcelFile, data, def)
+
+}
+
+func LoadRichFrames(excelFile, excelDefFile string, opts *Options) (RichFrames, error) {
+	def := &XlsxFileDef{}
+	file, err := os.Open(excelDefFile)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer file.Close()
+
+	loadErr := LoadXlsxFileDef(file, def)
+	if loadErr != nil {
+		return nil, loadErr
+	}
+
+	frames := RichFrames{}
+
+	err = Unmarshal(excelFile, frames, def, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return frames, nil
+
+}
+
+func ExportRichFrames(data RichFrames, outExcelFile, excelDefFile string, opts *Options) error {
 	def := &XlsxFileDef{}
 	file, err := os.Open(excelDefFile)
 
