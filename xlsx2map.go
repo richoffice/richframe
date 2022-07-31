@@ -31,8 +31,8 @@ func Marshal(outFilePath string, input interface{}, def *XlsxFileDef) error {
 
 			sheetData := data[sheetDef.Key]
 
-			for i := 0; i < len(sheetData); i++ {
-				rowData := sheetData[i]
+			for i := 0; i < len(sheetData.RichMaps); i++ {
+				rowData := sheetData.RichMaps[i]
 				for colIndex, fieldDef := range sheetDef.FieldDefs {
 					columnName, columnErr := excelize.ColumnNumberToName(colIndex + 1)
 					if columnErr != nil {
@@ -97,20 +97,22 @@ func Unmarshal(xslxFile string, result interface{}, def *XlsxFileDef, opts *Opti
 	return nil
 }
 
-func parseSheet(f *excelize.File, sheet string, sheetDef *SheetDef) (RichFrame, error) {
+func parseSheet(f *excelize.File, sheet string, sheetDef *SheetDef) (*RichFrame, error) {
 	rows, err := f.GetRows(sheet, excelize.Options{RawCellValue: true})
 	if err != nil {
 		return nil, err
 	}
 
 	var columns *Columns = nil
-	results := RichFrame{}
+	results := &RichFrame{
+		RichMaps: []RichMap{},
+	}
 	for i, row := range rows {
 		if i == 0 {
 			columns = PrepareColumns(row, sheetDef)
 		} else {
 			data := PrepareRow(row, columns)
-			results = append(results, data)
+			results.RichMaps = append(results.RichMaps, data)
 		}
 
 	}

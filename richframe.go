@@ -7,17 +7,15 @@ import (
 
 type RichMap map[string]interface{}
 
-func (rm RichMap) String() string {
-	var buffer bytes.Buffer
-	for k, v := range rm {
-		buffer.WriteString(fmt.Sprintf("%v:%v,", k, v))
-	}
-	return buffer.String()
+type RichFrame struct {
+	RichMaps []RichMap
 }
 
-type RichFrame []RichMap
+type RichFrames map[string]*RichFrame
 
-type RichFrames map[string]RichFrame
+func (rfs RichFrames) Get(key string) interface{} {
+	return rfs[key]
+}
 
 type ApplyFunc func(RichMap)
 
@@ -27,35 +25,36 @@ type FilterFunc func(RichMap) bool
 
 func (rf *RichFrame) String() string {
 	var buffer bytes.Buffer
-	for _, row := range *rf {
-		buffer.WriteString(row.String() + "\n")
+	for _, row := range rf.RichMaps {
+		buffer.WriteString(fmt.Sprintf("%v \n", row))
 	}
 	return buffer.String()
 }
 
-func (rf *RichFrame) Apply(f ApplyFunc) RichFrame {
-	for _, row := range *rf {
+func (rf *RichFrame) Apply(f ApplyFunc) *RichFrame {
+	for _, row := range rf.RichMaps {
 		f(row)
 	}
-	return *rf
+	return rf
 }
 
-func (rf *RichFrame) Add(title string, f AddFunc) RichFrame {
-	for _, row := range *rf {
+func (rf *RichFrame) Add(title string, f AddFunc) *RichFrame {
+	for _, row := range rf.RichMaps {
 		row[title] = f(row)
 	}
-	return *rf
+	return rf
 }
 
-func (rf *RichFrame) Filter(f FilterFunc) RichFrame {
+func (rf *RichFrame) Filter(f FilterFunc) *RichFrame {
 
-	tmpRf := *rf
-	*rf = RichFrame{}
+	tmpRM := []RichMap{}
 
-	for _, row := range tmpRf {
+	for _, row := range rf.RichMaps {
 		if f(row) {
-			*rf = append(*rf, row)
+			tmpRM = append(tmpRM, row)
 		}
 	}
-	return *rf
+
+	rf.RichMaps = tmpRM
+	return rf
 }
