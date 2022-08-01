@@ -11,11 +11,11 @@ type RichFrame struct {
 	RichMaps []RichMap
 }
 
-type RichFrames map[string]*RichFrame
+// type RichFrames map[string]*RichFrame
 
-func (rfs RichFrames) Get(key string) interface{} {
-	return rfs[key]
-}
+// func (rfs RichFrames) Get(key string) interface{} {
+// 	return rfs[key]
+// }
 
 type ApplyFunc func(RichMap)
 

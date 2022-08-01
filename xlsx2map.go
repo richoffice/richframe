@@ -15,7 +15,7 @@ type Options struct {
 func Marshal(outFilePath string, input interface{}, def *XlsxFileDef) error {
 
 	f := excelize.NewFile()
-	if data, ok := input.(RichFrames); ok {
+	if data, ok := input.(map[string]*RichFrame); ok {
 		// fmt.Println("map[string]map[string]interface{}")
 		for _, sheetDef := range def.SheetDefs {
 			f.NewSheet(sheetDef.GetTitle())
@@ -81,7 +81,7 @@ func Unmarshal(xslxFile string, result interface{}, def *XlsxFileDef, opts *Opti
 			}
 
 			switch v := result.(type) {
-			case RichFrames:
+			case map[string]*RichFrame:
 				v[sheetDef.Key] = sheetMap
 			default:
 				return fmt.Errorf("not a sheepmap: %v", sheetMap)
@@ -192,7 +192,7 @@ func ExportToFile(data map[string][]map[string]interface{}, outExcelFile, excelD
 
 }
 
-func LoadRichFrames(excelFile, excelDefFile string, opts *Options) (RichFrames, error) {
+func LoadRichFrames(excelFile, excelDefFile string, opts *Options) (map[string]*RichFrame, error) {
 	def := &XlsxFileDef{}
 	file, err := os.Open(excelDefFile)
 
@@ -207,7 +207,7 @@ func LoadRichFrames(excelFile, excelDefFile string, opts *Options) (RichFrames, 
 		return nil, loadErr
 	}
 
-	frames := RichFrames{}
+	frames := map[string]*RichFrame{}
 
 	err = Unmarshal(excelFile, frames, def, nil)
 	if err != nil {
@@ -218,7 +218,7 @@ func LoadRichFrames(excelFile, excelDefFile string, opts *Options) (RichFrames, 
 
 }
 
-func ExportRichFrames(data RichFrames, outExcelFile, excelDefFile string, opts *Options) error {
+func ExportRichFrames(data map[string]*RichFrame, outExcelFile, excelDefFile string, opts *Options) error {
 	def := &XlsxFileDef{}
 	file, err := os.Open(excelDefFile)
 
