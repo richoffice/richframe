@@ -108,7 +108,7 @@ func TestRichFrame_Add(t *testing.T) {
 		},
 	}
 
-	rf.Add("name", func(rm RichMap) interface{} {
+	rf.Mutate("name", func(rm RichMap) interface{} {
 		return rm["key1"].(string) + " abc"
 	})
 

@@ -27,7 +27,11 @@ func (rf *RichFrame) String() string {
 	var buffer bytes.Buffer
 	for _, row := range rf.RichMaps {
 		buffer.WriteString(fmt.Sprintf("%v \n", row))
+		break
 	}
+
+	buffer.WriteString(fmt.Sprintf("len(%v) \n", len(rf.RichMaps)))
+
 	return buffer.String()
 }
 
@@ -38,7 +42,7 @@ func (rf *RichFrame) Apply(f ApplyFunc) *RichFrame {
 	return rf
 }
 
-func (rf *RichFrame) Add(title string, f AddFunc) *RichFrame {
+func (rf *RichFrame) Mutate(title string, f AddFunc) *RichFrame {
 	for _, row := range rf.RichMaps {
 		row[title] = f(row)
 	}
