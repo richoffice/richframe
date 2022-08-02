@@ -19,7 +19,9 @@ type RichFrame struct {
 
 type ApplyFunc func(RichMap)
 
-type AddFunc func(RichMap) interface{}
+type MutateFunc func(RichMap) interface{}
+
+type AggregateFunc func(interface{}, interface{}) interface{}
 
 type FilterFunc func(RichMap) bool
 
@@ -42,11 +44,55 @@ func (rf *RichFrame) Apply(f ApplyFunc) *RichFrame {
 	return rf
 }
 
-func (rf *RichFrame) Mutate(title string, f AddFunc) *RichFrame {
+func (rf *RichFrame) Rows() []RichMap {
+	return rf.RichMaps
+}
+
+func (rf *RichFrame) Mutate(title string, f MutateFunc) *RichFrame {
 	for _, row := range rf.RichMaps {
 		row[title] = f(row)
 	}
 	return rf
+}
+
+func (rf *RichFrame) Aggregate(groupBy []string, cols []string, funcs []AggregateFunc) *RichFrame {
+	out := &RichFrame{}
+
+	for _, row := range rf.Rows() {
+		outMap := GetGroup(out, row, groupBy)
+		if outMap == nil {
+			outMap = RichMap{}
+			for _, by := range groupBy {
+				outMap[by] = row[by]
+			}
+
+			for i := 0; i < len(cols); i++ {
+				outMap[cols[i]] = funcs[i](nil, row[cols[i]])
+			}
+		} else {
+			for i := 0; i < len(cols); i++ {
+				outMap[cols[i]] = funcs[i](outMap[cols[i]], row[cols[i]])
+			}
+		}
+
+	}
+
+	return out
+}
+
+func GetGroup(out *RichFrame, origin RichMap, groupBy []string) RichMap {
+	for _, r := range out.Rows() {
+		for byIndex, by := range groupBy {
+			if r[by] != origin[by] {
+				break
+			}
+			if byIndex == len(groupBy)-1 {
+				return r
+			}
+		}
+	}
+
+	return nil
 }
 
 func (rf *RichFrame) Filter(f FilterFunc) *RichFrame {
