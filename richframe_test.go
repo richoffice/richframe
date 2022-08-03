@@ -22,6 +22,22 @@ func getData1() RichFrame {
 	}
 }
 
+func getData2() RichFrame {
+	return RichFrame{
+		RichMaps: []RichMap{
+			{
+				"key1": "abc1",
+			},
+			{
+				"key1": "abc2",
+			},
+			{
+				"key1": "abc1",
+			},
+		},
+	}
+}
+
 func TestRichFrame_ToString(t *testing.T) {
 
 	expected := `key1:abc1,
@@ -115,4 +131,36 @@ func TestRichFrame_Add(t *testing.T) {
 	if !reflect.DeepEqual(rf, expected) {
 		t.Errorf("expected %v, but got %v", expected, rf)
 	}
+}
+
+func TestRichFrame_Aggregate(t *testing.T) {
+	rf := getData2()
+	expected := &RichFrame{
+		RichMaps: []RichMap{
+			{
+				"key1":  "abc1",
+				"count": int64(2),
+			},
+			{
+				"key1":  "abc2",
+				"count": int64(1),
+			},
+		},
+	}
+
+	out := rf.Aggregate([]string{"key1"}, []string{"count"}, []AggregateFunc{
+		func(origin interface{}, rm RichMap) interface{} {
+			if origin == nil {
+				return int64(1)
+			} else {
+				return origin.(int64) + 1
+			}
+		},
+	})
+
+	if !reflect.DeepEqual(expected, out) {
+		t.Errorf("expected %v, but got %v", expected, out)
+	}
+
+	// fmt.Println(out)
 }
