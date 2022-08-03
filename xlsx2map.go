@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/xuri/excelize/v2"
 )
@@ -15,9 +16,15 @@ type Options struct {
 func Marshal(outFilePath string, input interface{}, def *XlsxFileDef) error {
 
 	f := excelize.NewFile()
+
+	deleteDefaultSheet := true
+
 	if data, ok := input.(map[string]*RichFrame); ok {
 		// fmt.Println("map[string]map[string]interface{}")
 		for _, sheetDef := range def.SheetDefs {
+			if "sheet1" == strings.ToLower(sheetDef.GetTitle()) {
+				deleteDefaultSheet = false
+			}
 			f.NewSheet(sheetDef.GetTitle())
 
 			for colIndex, fieldDef := range sheetDef.FieldDefs {
@@ -30,6 +37,9 @@ func Marshal(outFilePath string, input interface{}, def *XlsxFileDef) error {
 			}
 
 			sheetData := data[sheetDef.Key]
+			if sheetData == nil {
+				return fmt.Errorf("no data for key: %v", sheetDef.Key)
+			}
 
 			for i := 0; i < len(sheetData.RichMaps); i++ {
 				rowData := sheetData.RichMaps[i]
@@ -46,7 +56,12 @@ func Marshal(outFilePath string, input interface{}, def *XlsxFileDef) error {
 			// fmt.Println(data, index)
 
 		}
-		// f.SetActiveSheet(index)
+
+		if deleteDefaultSheet {
+			f.DeleteSheet("sheet1")
+		}
+
+		f.SetActiveSheet(0)
 		if err := f.SaveAs(outFilePath); err != nil {
 			return err
 		}

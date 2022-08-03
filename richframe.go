@@ -52,6 +52,14 @@ func (rf *RichFrame) Apply(f ApplyFunc) *RichFrame {
 	return rf
 }
 
+func (rf *RichFrame) Rename(old string, new string) *RichFrame {
+	for _, row := range rf.RichMaps {
+		row[new] = row[old]
+		delete(row, old)
+	}
+	return rf
+}
+
 func (rf *RichFrame) Mutate(title string, f MutateFunc) *RichFrame {
 	for _, row := range rf.RichMaps {
 		row[title] = f(row)
