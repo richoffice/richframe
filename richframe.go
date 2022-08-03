@@ -124,3 +124,16 @@ func (rf *RichFrame) Filter(f FilterFunc) *RichFrame {
 	rf.RichMaps = tmpRM
 	return rf
 }
+
+func (rf *RichFrame) FilterNew(f FilterFunc) *RichFrame {
+
+	tmpRM := []RichMap{}
+
+	for _, row := range rf.RichMaps {
+		if f(row) {
+			tmpRM = append(tmpRM, row)
+		}
+	}
+
+	return &RichFrame{tmpRM}
+}
