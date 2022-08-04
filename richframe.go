@@ -60,6 +60,27 @@ func (rf *RichFrame) Rename(old string, new string) *RichFrame {
 	return rf
 }
 
+func (rf *RichFrame) Distinct(col string) []interface{} {
+	values := make(map[interface{}]interface{}, 0)
+	for _, row := range rf.Rows() {
+		values[row[col]] = 0
+	}
+	keys := make([]interface{}, 0, len(values))
+	for k := range values {
+		keys = append(keys, k)
+	}
+
+	return keys
+}
+
+func (rf *RichFrame) Col(col string) []interface{} {
+	values := make([]interface{}, 0, len(rf.Rows()))
+	for _, row := range rf.Rows() {
+		values = append(values, row[col])
+	}
+	return values
+}
+
 func (rf *RichFrame) Mutate(title string, f MutateFunc) *RichFrame {
 	for _, row := range rf.RichMaps {
 		row[title] = f(row)
@@ -71,7 +92,7 @@ func (rf *RichFrame) Aggregate(groupBy []string, cols []string, funcs []Aggregat
 	out := &RichFrame{}
 
 	for _, row := range rf.Rows() {
-		outMap := GetGroup(out, row, groupBy)
+		outMap := GetGroup(out.Rows(), row, groupBy)
 		// fmt.Println(outMap)
 		if outMap == nil {
 			// fmt.Println(outMap)
@@ -96,8 +117,8 @@ func (rf *RichFrame) Aggregate(groupBy []string, cols []string, funcs []Aggregat
 	return out
 }
 
-func GetGroup(out *RichFrame, origin RichMap, groupBy []string) RichMap {
-	for _, r := range out.Rows() {
+func GetGroup(out []RichMap, origin RichMap, groupBy []string) RichMap {
+	for _, r := range out {
 		for byIndex, by := range groupBy {
 			if r[by] != origin[by] {
 				break
@@ -137,3 +158,50 @@ func (rf *RichFrame) FilterNew(f FilterFunc) *RichFrame {
 
 	return &RichFrame{tmpRM}
 }
+
+func (rf *RichFrame) Join(rights *RichFrame, leftBys []string, rightBys []string, defaults map[string]interface{}) {
+	for i := 0; i < len(rf.Rows()); i++ {
+		left := rf.Rows()[i]
+		matched := GetMatchRichMap(left, rights.Rows(), leftBys, rightBys)
+		if matched == nil {
+			for k, v := range defaults {
+				left[k] = v
+			}
+		} else {
+			for k, v := range matched {
+				if _, ok := left[k]; !ok {
+					left[k] = v
+				}
+			}
+		}
+	}
+}
+
+func GetMatchRichMap(left RichMap, rights []RichMap, leftBys []string, rightBys []string) RichMap {
+	for _, right := range rights {
+		if MatchGroup(left, right, leftBys, rightBys) {
+			return right
+		}
+	}
+	return nil
+}
+
+func MatchGroup(left RichMap, right RichMap, leftBys []string, rightBys []string) bool {
+	for byIndex, leftBy := range leftBys {
+		if left[leftBy] != right[rightBys[byIndex]] {
+			return false
+		}
+	}
+
+	return true
+}
+
+// func contains(s []interface{}, str interface{}) bool {
+// 	for _, v := range s {
+// 		if v == str {
+// 			return true
+// 		}
+// 	}
+
+// 	return false
+// }
