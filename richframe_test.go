@@ -8,32 +8,28 @@ import (
 
 func getData1() RichFrame {
 	return RichFrame{
-		RichMaps: []RichMap{
-			{
-				"key1": "abc1",
-			},
-			{
-				"key1": "abc2",
-			},
-			{
-				"key1": "abc3",
-			},
+		{
+			"key1": "abc1",
+		},
+		{
+			"key1": "abc2",
+		},
+		{
+			"key1": "abc3",
 		},
 	}
 }
 
 func getData2() RichFrame {
 	return RichFrame{
-		RichMaps: []RichMap{
-			{
-				"key1": "abc1",
-			},
-			{
-				"key1": "abc2",
-			},
-			{
-				"key1": "abc1",
-			},
+		{
+			"key1": "abc1",
+		},
+		{
+			"key1": "abc2",
+		},
+		{
+			"key1": "abc1",
 		},
 	}
 }
@@ -58,24 +54,26 @@ func TestRichFrame_Apply(t *testing.T) {
 	rf := getData1()
 
 	expected := RichFrame{
-		RichMaps: []RichMap{
-			{
-				"key1": "abc1",
-				"key2": "abc1 abc1",
-			},
-			{
-				"key1": "abc2",
-				"key2": "abc2 abc2",
-			},
-			{
-				"key1": "abc3",
-				"key2": "abc3 abc3",
-			},
+		{
+			"key1": "abc1",
+			"key2": "abc1 abc1",
+		},
+		{
+			"key1": "abc2",
+			"key2": "abc2 abc2",
+		},
+		{
+			"key1": "abc3",
+			"key2": "abc3 abc3",
 		},
 	}
-	rf.Apply(func(rm RichMap) {
+
+	fmt.Printf("external: %p\n", &rf)
+	x := rf.Apply(func(rm RichMap) {
 		rm["key2"] = fmt.Sprintf("%v %v", rm["key1"], rm["key1"])
 	})
+
+	fmt.Printf("returned: %p\n", x)
 
 	if !reflect.DeepEqual(rf, expected) {
 		t.Errorf("expected %v, but got %v", expected, rf)
@@ -84,23 +82,21 @@ func TestRichFrame_Apply(t *testing.T) {
 
 func TestRichFrame_Filter(t *testing.T) {
 	rf := getData1()
-	expected := RichFrame{
-		RichMaps: []RichMap{
-			{
-				"key1": "abc1",
-			},
-			{
-				"key1": "abc2",
-			},
+	expected := &RichFrame{
+		{
+			"key1": "abc1",
+		},
+		{
+			"key1": "abc2",
 		},
 	}
 
-	rf.Filter(func(rm RichMap) bool {
+	x := rf.Filter(func(rm RichMap) bool {
 		return rm["key1"] != "abc3"
 	})
 
-	if !reflect.DeepEqual(rf, expected) {
-		t.Errorf("expected %v, but got %v", expected, rf)
+	if !reflect.DeepEqual(x, expected) {
+		t.Errorf("expected %v, but got %v", expected, x)
 	}
 
 }
@@ -108,19 +104,17 @@ func TestRichFrame_Filter(t *testing.T) {
 func TestRichFrame_Add(t *testing.T) {
 	rf := getData1()
 	expected := RichFrame{
-		RichMaps: []RichMap{
-			{
-				"key1": "abc1",
-				"name": "abc1 abc",
-			},
-			{
-				"key1": "abc2",
-				"name": "abc2 abc",
-			},
-			{
-				"key1": "abc3",
-				"name": "abc3 abc",
-			},
+		{
+			"key1": "abc1",
+			"name": "abc1 abc",
+		},
+		{
+			"key1": "abc2",
+			"name": "abc2 abc",
+		},
+		{
+			"key1": "abc3",
+			"name": "abc3 abc",
 		},
 	}
 
@@ -135,16 +129,14 @@ func TestRichFrame_Add(t *testing.T) {
 
 func TestRichFrame_Aggregate(t *testing.T) {
 	rf := getData2()
-	expected := &RichFrame{
-		RichMaps: []RichMap{
-			{
-				"key1":  "abc1",
-				"count": int64(2),
-			},
-			{
-				"key1":  "abc2",
-				"count": int64(1),
-			},
+	expected := RichFrame{
+		{
+			"key1":  "abc1",
+			"count": int64(2),
+		},
+		{
+			"key1":  "abc2",
+			"count": int64(1),
 		},
 	}
 
