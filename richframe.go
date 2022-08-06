@@ -7,21 +7,7 @@ import (
 
 type RichMap map[string]interface{}
 
-// type RichFrame struct {
-// 	RichMaps []RichMap
-// }
-
 type RichFrame []RichMap
-
-// func (rf RichFrame) Append(rm RichMap) {
-// 	rf = append(rf, rm)
-// }
-
-// type RichFrames map[string]*RichFrame
-
-// func (rfs RichFrames) Get(key string) interface{} {
-// 	return rfs[key]
-// }
 
 type ApplyFunc func(RichMap)
 
@@ -43,12 +29,8 @@ func (rf RichFrame) String() string {
 	return buffer.String()
 }
 
-// func (rf *RichFrame) Rows() []RichMap {
-// 	return rf.RichMaps
-// }
-
 func (rf RichFrame) Apply(f ApplyFunc) RichFrame {
-	fmt.Printf("internal: %p\n", rf)
+	// fmt.Printf("internal: %p\n", rf)
 	for _, row := range rf {
 		f(row)
 	}
@@ -96,7 +78,6 @@ func (rf RichFrame) Aggregate(groupBy []string, cols []string, funcs []Aggregate
 
 	for _, row := range rf {
 		outMap := getGroup(out, row, groupBy)
-		fmt.Println(outMap)
 		if outMap == nil {
 			// fmt.Println(outMap)
 			outMap = &RichMap{}
@@ -116,7 +97,7 @@ func (rf RichFrame) Aggregate(groupBy []string, cols []string, funcs []Aggregate
 		}
 
 	}
-	fmt.Println(out)
+	// fmt.Println(out)
 
 	return *out
 }

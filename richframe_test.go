@@ -3,6 +3,7 @@ package richframe
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -36,17 +37,19 @@ func getData2() RichFrame {
 
 func TestRichFrame_ToString(t *testing.T) {
 
-	expected := `key1:abc1,
-key1:abc2,
-key1:abc3,
+	expected := `map[key1:abc1] 
+len(3) 
 `
-	rf := getData1()
+	expected = strings.TrimSpace(expected)
 
-	if expected != rf.String() {
-		t.Errorf("Expected %v but got %v", expected, rf.String())
+	rf := getData1()
+	actual := strings.TrimSpace(rf.String())
+
+	if expected != actual {
+		t.Errorf("Expected %v but got %v", expected, actual)
 	}
 
-	fmt.Println(rf)
+	// fmt.Println(rf)
 
 }
 
@@ -154,5 +157,4 @@ func TestRichFrame_Aggregate(t *testing.T) {
 		t.Errorf("expected %v, but got %v", expected, out)
 	}
 
-	// fmt.Println(out)
 }
