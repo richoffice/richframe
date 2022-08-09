@@ -59,6 +59,9 @@ func ParseFloat(valueStr string, ops interface{}) (interface{}, error) {
 }
 
 func ParseExcelDate(valueStr string, ops interface{}) (interface{}, error) {
+	if valueStr == "" {
+		return "", nil
+	}
 	excelDate, err := strconv.ParseFloat(valueStr, 64)
 	if err != nil {
 		return nil, err
