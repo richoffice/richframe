@@ -50,9 +50,11 @@ func (rf RichFrame) Distinct(col string) []interface{} {
 	for _, row := range rf {
 		values[row[col]] = 0
 	}
-	keys := make([]interface{}, 0, len(values))
+	keys := make([]interface{}, 0)
 	for k := range values {
-		keys = append(keys, k)
+		if k != nil && k != "" {
+			keys = append(keys, k)
+		}
 	}
 
 	return keys
