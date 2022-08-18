@@ -18,6 +18,8 @@ type AggregateFunc func(interface{}, RichMap) interface{}
 
 type FilterFunc func(RichMap) bool
 
+type CompareFunc func(RichMap, RichMap) int
+
 func (rf RichFrame) String() string {
 	var buffer bytes.Buffer
 	for _, row := range rf {
@@ -131,6 +133,17 @@ func (rf RichFrame) Filter(f FilterFunc) RichFrame {
 	}
 
 	rf = tmpRM
+	return rf
+}
+
+func (rf RichFrame) Sort(f CompareFunc) RichFrame {
+	for i := 0; i < len(rf); i++ {
+		for j := 0; j < len(rf)-1-i; j++ {
+			if f(rf[j], rf[j+1]) > 0 {
+				rf[j], rf[j+1] = rf[j+1], rf[j]
+			}
+		}
+	}
 	return rf
 }
 

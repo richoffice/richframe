@@ -158,3 +158,49 @@ func TestRichFrame_Aggregate(t *testing.T) {
 	}
 
 }
+
+func getOrderData1() RichFrame {
+	return RichFrame{
+		{
+			"name": "lily",
+			"age":  34,
+		},
+		{
+			"name": "rock",
+			"age":  21,
+		},
+		{
+			"name": "lucky",
+			"age":  66,
+		},
+	}
+}
+
+func TestRichFrame_OrderBy(t *testing.T) {
+	expected := RichFrame{
+		{
+			"name": "lucky",
+			"age":  66,
+		},
+		{
+			"name": "lily",
+			"age":  34,
+		},
+		{
+			"name": "rock",
+			"age":  21,
+		},
+	}
+
+	in := getOrderData1()
+	in.Sort(func(rm1, rm2 RichMap) int {
+		left := rm1["age"].(int)
+		right := rm2["age"].(int)
+		return right - left
+	})
+
+	if !reflect.DeepEqual(in, expected) {
+		t.Errorf("expected %v, but got %v", expected, in)
+	}
+
+}
