@@ -3,6 +3,7 @@ package richframe
 import (
 	"bytes"
 	"fmt"
+	"strconv"
 )
 
 type RichMap map[string]interface{}
@@ -130,6 +131,19 @@ func (rf RichFrame) Filter(f FilterFunc) RichFrame {
 	}
 
 	rf = tmpRM
+	return rf
+}
+
+func (rf RichFrame) OrderByInt(rowKey string) RichFrame {
+	for i := 0; i < len(rf); i++ {
+		for j := 0; j < len(rf)-1-i; j++ {
+			count1, _ := strconv.Atoi(rf[j][rowKey].(string))
+			count2, _ := strconv.Atoi(rf[j+1][rowKey].(string))
+			if count1 < count2 {
+				rf[j], rf[j+1] = rf[j+1], rf[j]
+			}
+		}
+	}
 	return rf
 }
 
