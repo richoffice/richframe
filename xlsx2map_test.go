@@ -72,3 +72,16 @@ func TestLoadRichFrames(t *testing.T) {
 		t.Errorf("expected no error, but got %v", err)
 	}
 }
+
+func TestExportRichFramesByTemp(t *testing.T) {
+	data, err := LoadRichFrames("testfiles/sample_file.xlsx", "testfiles/sample_def.json", nil)
+	if err != nil {
+		t.Errorf("expected no error, but got %v", err)
+	}
+	fmt.Println(data)
+
+	err = ExportRichFramesByTemp(data, "testfiles/test_tmp_out.xlsx", "testfiles/test_tmp.xlsx", "testfiles/sample_def.json", nil)
+	if err != nil {
+		t.Errorf("expected no error, but got %v", err)
+	}
+}

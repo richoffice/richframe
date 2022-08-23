@@ -15,6 +15,21 @@
                 }
 
             ]
+        },
+        {
+            "key": "visitors1",
+            "aliases": ["Visitors List1", "访客名单1", "Visitors1"],
+            "fields":[
+                {
+                    "key": "name",
+                    "aliases": ["名称", "姓名", "Name"]
+                },
+                {
+                    "key": "birthday",
+                    "aliases": ["生日", "Birthday"],
+                    "dataType": "ExcelDate"
+                }
+            ]
         }
     ]
 }

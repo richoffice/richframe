@@ -249,3 +249,99 @@ func ExportRichFrames(data map[string]RichFrame, outExcelFile, excelDefFile stri
 	return Marshal(outExcelFile, data, def)
 
 }
+
+func ExportRichFramesByTemp(data map[string]RichFrame, outExcelFile, tmpExcelFile, excelDefFile string, opts *Options) error {
+	def := &XlsxFileDef{}
+	file, err := os.Open(excelDefFile)
+
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	loadErr := LoadXlsxFileDef(file, def)
+	if loadErr != nil {
+		return loadErr
+	}
+
+	return MarshalByTemp(outExcelFile, tmpExcelFile, data, def)
+
+}
+
+func MarshalByTemp(outFilePath, tmpExcelFile string, input interface{}, def *XlsxFileDef) error {
+
+	f, err := excelize.OpenFile(tmpExcelFile)
+	if err != nil {
+		return fmt.Errorf("excelize.OpenFile tmpExcelFile err: %v", err)
+	}
+
+	deleteDefaultSheet := true
+
+	if data, ok := input.(map[string]RichFrame); ok {
+		// fmt.Println("map[string]map[string]interface{}")
+		for _, sheetDef := range def.SheetDefs {
+			if strings.ToLower(sheetDef.GetTitle()) == "sheet1" {
+				deleteDefaultSheet = false
+			}
+			sheetDefName := sheetDef.GetTitle()
+			tempSheetNames := f.GetSheetList()
+			var HasTempSheetName = false
+			for _, v := range tempSheetNames {
+				if v == sheetDefName {
+					HasTempSheetName = true
+				}
+			}
+			if HasTempSheetName == false {
+				break
+			}
+			//f.NewSheet(sheetDef.GetTitle())
+			//f.GetSheetList()
+			for colIndex, fieldDef := range sheetDef.FieldDefs {
+				columnName, columnErr := excelize.ColumnNumberToName(colIndex + 1)
+				if columnErr != nil {
+					return columnErr
+				}
+				err := f.SetCellValue(sheetDef.GetTitle(), columnName+"1", fieldDef.GetTitle())
+				if err != nil {
+					return fmt.Errorf("SetCellValue err: %v", err)
+				}
+			}
+
+			sheetData := data[sheetDef.Key]
+			if sheetData == nil {
+				return fmt.Errorf("no data for key: %v", sheetDef.Key)
+			}
+
+			for i := 0; i < len(sheetData); i++ {
+				rowData := sheetData[i]
+				for colIndex, fieldDef := range sheetDef.FieldDefs {
+					columnName, columnErr := excelize.ColumnNumberToName(colIndex + 1)
+					if columnErr != nil {
+						return columnErr
+					}
+					f.SetCellValue(sheetDef.GetTitle(), columnName+strconv.Itoa(i+2), rowData[fieldDef.Key])
+				}
+
+			}
+
+			// fmt.Println(data, index)
+
+		}
+
+		if deleteDefaultSheet {
+			f.DeleteSheet("sheet1")
+		}
+
+		f.SetActiveSheet(0)
+		if err := f.SaveAs(outFilePath); err != nil {
+			return err
+		}
+
+	} else {
+		return errors.New("not supported data type")
+	}
+
+	return nil
+
+}
