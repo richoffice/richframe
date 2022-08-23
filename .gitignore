@@ -15,3 +15,5 @@
 # vendor/
 
 test_out.xlsx
+
+msgs-out.csv
