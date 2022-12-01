@@ -130,6 +130,23 @@ func TestRichFrame_Add(t *testing.T) {
 	}
 }
 
+func TestRichFrame_Unique(t *testing.T) {
+	rf := getData2()
+	expected := RichFrame{
+		{
+			"key1": "abc1",
+		},
+		{
+			"key1": "abc2",
+		},
+	}
+	out := rf.Unique("key1")
+
+	if !reflect.DeepEqual(expected, out) {
+		t.Errorf("expected %v, but got %v", expected, out)
+	}
+}
+
 func TestRichFrame_Aggregate(t *testing.T) {
 	rf := getData2()
 	expected := RichFrame{

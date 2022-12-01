@@ -63,6 +63,21 @@ func (rf RichFrame) Distinct(col string) []interface{} {
 	return keys
 }
 
+func (rf RichFrame) Unique(col string) RichFrame {
+	tmpRM := RichFrame{}
+
+	values := make(map[interface{}]int, 0)
+	for _, row := range rf {
+		if values[row[col]] == 0 {
+			values[row[col]] = 1
+			tmpRM = append(tmpRM, row)
+		}
+	}
+
+	rf = tmpRM
+	return rf
+}
+
 func (rf RichFrame) Col(col string) []interface{} {
 	values := make([]interface{}, 0, len(rf))
 	for _, row := range rf {
