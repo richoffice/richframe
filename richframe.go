@@ -48,6 +48,13 @@ func (rf RichFrame) Rename(old string, new string) RichFrame {
 	return rf
 }
 
+func (rf RichFrame) Del(old string) RichFrame {
+	for _, row := range rf {
+		delete(row, old)
+	}
+	return rf
+}
+
 func (rf RichFrame) Distinct(col string) []interface{} {
 	values := make(map[interface{}]interface{}, 0)
 	for _, row := range rf {
