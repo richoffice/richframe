@@ -213,6 +213,11 @@ func (rf RichFrame) Join(rights RichFrame, leftBys []string, rightBys []string, 
 	}
 }
 
+func (rf RichFrame) Concat(rights RichFrame) RichFrame {
+	rf = append(rf, rights...)
+	return rf
+}
+
 func GetMatchRichMap(left RichMap, rights []RichMap, leftBys []string, rightBys []string) RichMap {
 	for _, right := range rights {
 		if MatchGroup(left, right, leftBys, rightBys) {
