@@ -345,3 +345,131 @@ func MarshalByTemp(outFilePath, tmpExcelFile string, input interface{}, def *Xls
 	return nil
 
 }
+
+func LoadRichFramesContainMergeCells(excelFile, excelDefFile string, opts *Options) (map[string]RichFrame, error) {
+	def := &XlsxFileDef{}
+	file, err := os.Open(excelDefFile)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer file.Close()
+
+	loadErr := LoadXlsxFileDef(file, def)
+	if loadErr != nil {
+		return nil, loadErr
+	}
+
+	frames := map[string]RichFrame{}
+
+	err = UnmarshalContainMergeCells(excelFile, frames, def, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return frames, nil
+
+}
+
+func UnmarshalContainMergeCells(xslxFile string, result interface{}, def *XlsxFileDef, opts *Options) error {
+
+	f, err := excelize.OpenFile(xslxFile)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		// Close the spreadsheet.
+		if err := f.Close(); err != nil {
+			return
+		}
+	}()
+
+	for _, sheetName := range f.GetSheetList() {
+		sheetDef := def.GetSheetDef(sheetName)
+		if sheetDef != nil {
+			sheetMap, err := parseSheetContainMergeCells(f, sheetName, sheetDef)
+			if err != nil {
+				return err
+			}
+
+			switch v := result.(type) {
+			case map[string]RichFrame:
+				v[sheetDef.Key] = sheetMap
+			default:
+				return fmt.Errorf("not a sheepmap: %v", sheetMap)
+			}
+
+			// xlsxMaps[sheetDef.Key] = sheetMap
+			// fmt.Println(sheetMap)
+
+		}
+
+	}
+
+	return nil
+}
+
+func parseSheetContainMergeCells(f *excelize.File, sheet string, sheetDef *SheetDef) (RichFrame, error) {
+	rows, err := f.GetRows(sheet, excelize.Options{RawCellValue: true})
+	if err != nil {
+		return nil, err
+	}
+	mergedCells, err := f.GetMergeCells(sheet)
+	if err != nil {
+		return nil, err
+	}
+	rowsLen := len(rows)
+	rowsLineLen := 0
+	if rowsLen > 0 {
+		rowsLineLen = len(rows[0])
+	}
+	maxLine := 0
+	for _, mergedCell := range mergedCells {
+		endAxis := mergedCell.GetEndAxis()
+		_, endLine, _ := excelize.CellNameToCoordinates(endAxis)
+		if rowsLen < endLine && maxLine < endLine {
+			maxLine = endLine
+		}
+	}
+	for i := 0; i < maxLine-rowsLen; i++ {
+		s := make([]string, 0)
+		rows = append(rows, s)
+	}
+	//appendS := []string{}
+	for i := range rows {
+		if rows[i] == nil || len(rows[i]) == 0 {
+			for j := 0; j < rowsLineLen; j++ {
+				rows[i] = append(rows[i], "1")
+			}
+		} else if len(rows[i]) < rowsLineLen {
+			for j := 0; j < rowsLineLen-len(rows[i]); j++ {
+				rows[i] = append(rows[i], "1")
+			}
+		}
+	}
+	for _, mergedCell := range mergedCells {
+		value := mergedCell.GetCellValue()
+		startAxis := mergedCell.GetStartAxis()
+		endAxis := mergedCell.GetEndAxis()
+		startCol, startLine, _ := excelize.CellNameToCoordinates(startAxis)
+		endCol, endLine, _ := excelize.CellNameToCoordinates(endAxis)
+		for i := startCol - 1; i <= endCol-1; i++ {
+			for j := startLine - 1; j <= endLine-1; j++ {
+				rows[j][i] = value
+			}
+		}
+	}
+	var columns *Columns = nil
+	results := RichFrame{}
+	for i, row := range rows {
+		if i == 0 {
+			columns = PrepareColumns(row, sheetDef)
+		} else {
+			data := PrepareRow(row, columns)
+			results = append(results, data)
+		}
+
+	}
+	return results, nil
+}

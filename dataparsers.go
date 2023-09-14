@@ -1,9 +1,10 @@
 package richframe
 
 import (
-	"strconv"
-
+	"errors"
 	"github.com/xuri/excelize/v2"
+	"strconv"
+	"time"
 )
 
 type ParseDataFuncFactory struct {
@@ -58,13 +59,34 @@ func ParseFloat(valueStr string, ops interface{}) (interface{}, error) {
 	return floatValue, nil
 }
 
+//func ParseExcelDate(valueStr string, ops interface{}) (interface{}, error) {
+//	if valueStr == "" {
+//		return "", nil
+//	}
+//	excelDate, err := strconv.ParseFloat(valueStr, 64)
+//	if err != nil {
+//		return nil, err
+//	}
+//	excelTime, err := excelize.ExcelDateToTime(excelDate, false)
+//	// excelize.time
+//	if err != nil {
+//		return nil, err
+//	}
+//	return excelTime, nil
+//}
+
 func ParseExcelDate(valueStr string, ops interface{}) (interface{}, error) {
 	if valueStr == "" {
 		return "", nil
 	}
 	excelDate, err := strconv.ParseFloat(valueStr, 64)
 	if err != nil {
-		return nil, err
+		t, err := ParseTime(valueStr)
+		if err != nil {
+			return nil, err
+		} else {
+			return t, nil
+		}
 	}
 	excelTime, err := excelize.ExcelDateToTime(excelDate, false)
 	// excelize.time
@@ -72,4 +94,22 @@ func ParseExcelDate(valueStr string, ops interface{}) (interface{}, error) {
 		return nil, err
 	}
 	return excelTime, nil
+}
+
+func ParseTime(value string) (time.Time, error) {
+	layouts := []string{
+		"2006-01-02T15:04:05Z07:00",
+		"Jan 2, 2006 at 3:04pm (MST)",
+		"02/01/2006 15:04:05",
+		"2/1/06 15:04",
+		"2006/2/1 15:04:05",
+		"2006-02-01 15:04:05",
+	}
+	for _, layout := range layouts {
+		t, err := time.Parse(layout, value)
+		if err == nil {
+			return t, nil
+		}
+	}
+	return time.Time{}, errors.New("无法解析时间字符串")
 }
